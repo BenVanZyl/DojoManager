@@ -1,2 +1,41 @@
 # DojoManager
+
 Sharing my code that helps me run my Karate club.
+
+## About the Club
+
+- Dojo name: JKA PERTH
+- Domains:
+  - jkaperth.com
+  - jkaperth.com.au
+  - jkajoondalup.com
+
+**The default domain is jkaperth.com**
+
+## Application purpose
+
+- Provide genereal information to the public
+- Allow the public to contact me.
+- Proved a secured space where
+  - I can keep track of students
+    - attendance
+    - grading (belt) levels
+    - grading history
+    - competition history
+  - Manage news feed for the websites.
+ 
+## Current State
+
+### jkaperth.com
+
+Blazor Server app with secured area with some of the required functionality .  Currently in a broken state due to bugs.
+
+### jkaperth.com.au
+
+HTML Website providing public info only
+
+### jkajoondalup.com
+
+No web site configured.
+
+## Future State
