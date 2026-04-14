@@ -16,7 +16,7 @@ Sharing my code that helps me run my Karate club.
 
 - Provide genereal information to the public
 - Allow the public to contact me.
-- Proved a secured space where
+- Provide a secured space where
   - I can keep track of students
     - attendance
     - grading (belt) levels
@@ -39,3 +39,22 @@ HTML Website providing public info only
 No web site configured.
 
 ## Future State
+
+### jkaperth.com
+
+- Blazor Server app with secured area providing required features.
+- Contains REST WEB API endpoints for use by the other domains.
+
+### jkaperth.com.au
+
+Angular App providing info to the public by retrieving relevant data from the default domain using REST API:
+- contact info
+- news feed
+
+### jkajoondalup.com
+
+REACT App providing info to the public by retrieving relevant data from the default domain using REST API:
+- contact info
+- news feed
+
+No web site configured.
