@@ -28,7 +28,7 @@ Sharing my code that helps me run my Karate club.
 
 ### jkaperth.com
 
-Blazor Server app with secured area with some of the required functionality .  Currently in a broken state due to bugs.
+Blazor Server app with secured area with some of the required functionality .  Needs some bug fixes.
 
 ### jkaperth.com.au
 
@@ -57,4 +57,8 @@ REACT App providing info to the public by retrieving relevant data from the defa
 - contact info
 - news feed
 
-No web site configured.
+## Build and Release Management
+
+Currently this is done manually.  This process will be migrated to GitHub.com in order to have automated build and release pipelines.
+
+
