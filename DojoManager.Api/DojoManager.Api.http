@@ -1,0 +1,6 @@
+@DojoManager.Api_HostAddress = http://localhost:5036
+
+GET {{DojoManager.Api_HostAddress}}/api/news
+Accept: application/json
+
+###

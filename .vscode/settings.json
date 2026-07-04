@@ -1,0 +1,7 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "ng": true,
+        "Set-Content": true,
+        "New-Item": true
+    }
+}
