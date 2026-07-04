@@ -1,0 +1,26 @@
+<header class="site-header">
+  <div class="header-container">
+    <div class="logo">
+      <span class="logo-text">{{ appTitle }}</span>
+    </div>
+    <nav class="nav-menu">
+      <a href="#home" class="nav-link">Home</a>
+      <a href="#about" class="nav-link">About</a>
+      <a href="#news" class="nav-link">News</a>
+      <a href="#locations" class="nav-link">Locations</a>
+      <a href="#contact" class="nav-link">Contact</a>
+    </nav>
+    <button class="mobile-menu-btn" (click)="toggleMenu()">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+  </div>
+  <nav class="mobile-nav" [class.open]="menuOpen">
+    <a href="#home" class="nav-link" (click)="toggleMenu()">Home</a>
+    <a href="#about" class="nav-link" (click)="toggleMenu()">About</a>
+    <a href="#news" class="nav-link" (click)="toggleMenu()">News</a>
+    <a href="#locations" class="nav-link" (click)="toggleMenu()">Locations</a>
+    <a href="#contact" class="nav-link" (click)="toggleMenu()">Contact</a>
+  </nav>
+</header>

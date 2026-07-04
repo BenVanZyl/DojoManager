@@ -1,0 +1,36 @@
+<section id="news" class="news-section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">News</h2>
+      <div class="section-divider"></div>
+    </div>
+
+    @if (isLoading()) {
+      <p class="news-status">Loading latest news...</p>
+    } @else if (error()) {
+      <p class="news-status news-status-error">{{ error() }}</p>
+    } @else if (!hasNews()) {
+      <p class="news-status">No news available right now.</p>
+    } @else {
+      <div class="news-grid">
+        @for (item of newsItems(); track item.id) {
+          <article class="news-card">
+            <div class="news-card-header">
+              <span class="news-badge">{{ item.category }}</span>
+              <span class="news-date">{{ item.publishedUtc | date: 'MMM d, y' }}</span>
+            </div>
+            <h3 class="news-card-title">{{ item.title }}</h3>
+            <p class="news-card-text">{{ item.summary }}</p>
+            <a
+              class="news-link"
+              [routerLink]="['/news', item.id]"
+              [attr.aria-label]="'Read more: ' + item.title"
+            >
+              Read more
+            </a>
+          </article>
+        }
+      </div>
+    }
+  </div>
+</section>

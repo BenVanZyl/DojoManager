@@ -1,0 +1,26 @@
+[
+  {
+    "id": "news-001",
+    "title": "Summer Dojo Open Day Announced (SAMPLE ONLY)",
+    "summary": "Join us for free beginner sessions, instructor demos, and a family-friendly tournament showcase.",
+    "publishedUtc": "2026-06-01T10:00:00Z",
+    "category": "Events",
+    "url": "https://example.org/news/summer-dojo-open-day"
+  },
+  {
+    "id": "news-002",
+    "title": "New Youth Program Enrollment Now Open (SAMPLE ONLY)",
+    "summary": "Our updated youth curriculum starts in July with small group classes and weekend workshops.",
+    "publishedUtc": "2026-05-28T08:30:00Z",
+    "category": "Programs",
+    "url": "https://example.org/news/youth-program-enrollment"
+  },
+  {
+    "id": "news-003",
+    "title": "Regional Championship Results (SAMPLE ONLY)",
+    "summary": "Dojo Manager athletes returned with three gold medals and two silver medals in the regional finals.",
+    "publishedUtc": "2026-05-20T14:15:00Z",
+    "category": "Results",
+    "url": "https://example.org/news/regional-championship-results"
+  }
+]

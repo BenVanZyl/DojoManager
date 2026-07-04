@@ -1,0 +1,24 @@
+<section class="news-detail-section">
+  <div class="container">
+    @if (isLoading()) {
+      <p class="news-status">Loading article...</p>
+    } @else if (error()) {
+      <p class="news-status news-status-error">{{ error() }}</p>
+      <a routerLink="/" class="back-link">Back to home</a>
+    } @else if (newsItem()) {
+      <article class="news-detail">
+        <div class="news-detail-header">
+          <a routerLink="/" class="back-link">← Back to home</a>
+          <div class="news-meta">
+            <span class="news-badge">{{ newsItem()!.category }}</span>
+            <span class="news-date">{{ newsItem()!.publishedUtc | date: 'MMMM d, y' }}</span>
+          </div>
+        </div>
+        <h1 class="news-detail-title">{{ newsItem()!.title }}</h1>
+        <div class="news-detail-content">
+          <p>{{ newsItem()!.summary }}</p>
+        </div>
+      </article>
+    }
+  </div>
+</section>
