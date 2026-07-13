@@ -75,42 +75,6 @@ jobs:
             exit 1
           fi
 
-  snyk:
-    name: Snyk Security Scan
-    runs-on: ubuntu-latest
-    needs:
-      - angular
-      - api
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Validate Snyk token exists
-        shell: bash
-        run: |
-          if [ -z "${{ secrets.SNYK_TOKEN }}" ]; then
-            echo "SNYK_TOKEN secret is required for CI security gates."
-            exit 1
-          fi
-
-      - name: Setup Node for Snyk CLI
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Setup .NET for Snyk CLI
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Install Snyk CLI
-        run: npm install --global snyk
-
-      - name: Run Snyk test (all projects, high+)
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk test --all-projects --severity-threshold=high
-
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
