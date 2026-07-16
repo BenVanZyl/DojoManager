@@ -3,6 +3,5 @@
         "ng": true,
         "Set-Content": true,
         "New-Item": true
-    },
-    "snyk.advanced.autoSelectOrganization": true
+    }
 }

@@ -42,7 +42,9 @@
     "@angular/build": "^22.0.5",
     "@angular/cli": "^22.0.5",
     "@angular/compiler-cli": "^22.0.5",
-    "typescript": "~6.0.0"
+    "jsdom": "^29.1.1",
+    "typescript": "~6.0.0",
+    "vitest": "^4.1.10"
   },
   "overrides": {
     "@babel/core": "7.29.7",
