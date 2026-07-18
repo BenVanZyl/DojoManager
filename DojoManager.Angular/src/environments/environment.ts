@@ -1,4 +1,4 @@
 export const environment = {
-  apiBaseUrl: 'https://api.your-domain.com',
+  apiBaseUrl: 'jkajoondalup.com',
   appTitle: 'JKA Perth',
 };
