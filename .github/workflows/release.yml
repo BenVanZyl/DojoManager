@@ -161,6 +161,7 @@ jobs:
           password: ${{ secrets.PCA_FTP_PASSWORD }}
           protocol: ftps
           port: ${{ secrets.FTP_PORT || 21 }}
+          security: loose
           local-dir: deploy/angular/
           server-dir: /public_html/
 
@@ -172,5 +173,6 @@ jobs:
           password: ${{ secrets.PCA_FTP_PASSWORD }}
           protocol: ftps
           port: ${{ secrets.FTP_PORT || 21 }}
+          security: loose
           local-dir: deploy/api/
           server-dir: /api/
