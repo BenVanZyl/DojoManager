@@ -51,6 +51,9 @@ jobs:
       - name: Build production bundle
         run: npm run build:prod
 
+      - name: Ensure IIS web.config is included in the build output
+        run: cp public/web.config dist/DojoManager/browser/web.config
+
       - name: Upload Angular artifact
         uses: actions/upload-artifact@v4
         with:
@@ -163,7 +166,7 @@ jobs:
           port: ${{ secrets.FTP_PORT || 21 }}
           security: loose
           local-dir: deploy/angular/
-          server-dir: /public_html/
+          server-dir: /
 
       - name: Deploy API to FTPS /api
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
