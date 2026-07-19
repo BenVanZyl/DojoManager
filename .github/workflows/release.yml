@@ -176,21 +176,17 @@ jobs:
           if (-not (Test-Path $msdeploy)) {
             throw 'Web Deploy was not found after installation.'
           }
-
+  
           if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SERVER)) {
             throw 'PCA_WEBDEPLOY_SERVER is required.'
           }
-
+  
           if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SITE)) {
             throw 'PCA_WEBDEPLOY_SITE is required.'
           }
-
-          & $msdeploy `
-            -verb:sync `
-            -source:contentPath="${{ github.workspace }}\deploy\angular" `
-            -dest:iisApp="$env:WEBDEPLOY_SITE",computerName="$env:WEBDEPLOY_SERVER",userName="$env:WEBDEPLOY_USERNAME",password="$env:WEBDEPLOY_PASSWORD",authtype="Basic" `
-            -allowUntrusted
-
+  
+          & $msdeploy -verb:sync "-source:contentPath=$env:GITHUB_WORKSPACE\\deploy\\angular" "-dest:iisApp=`"$env:WEBDEPLOY_SITE`",computerName=`"$env:WEBDEPLOY_SERVER`",userName=`"$env:WEBDEPLOY_USERNAME`",password=`"$env:WEBDEPLOY_PASSWORD`",authtype=`"Basic`"" -allowUntrusted
+          
       - name: Deploy API to IIS api application
         shell: pwsh
         env:
@@ -203,19 +199,15 @@ jobs:
           if (-not (Test-Path $msdeploy)) {
             throw 'Web Deploy was not found after installation.'
           }
-
+  
           if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SERVER)) {
             throw 'PCA_WEBDEPLOY_SERVER is required.'
           }
-
+  
           if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SITE)) {
             throw 'PCA_WEBDEPLOY_SITE is required.'
           }
-
+  
           $apiPath = "$env:WEBDEPLOY_SITE/api"
-
-          & $msdeploy `
-            -verb:sync `
-            -source:contentPath="${{ github.workspace }}\deploy\api" `
-            -dest:iisApp="$apiPath",computerName="$env:WEBDEPLOY_SERVER",userName="$env:WEBDEPLOY_USERNAME",password="$env:WEBDEPLOY_PASSWORD",authtype="Basic" `
-            -allowUntrusted
+  
+          & $msdeploy -verb:sync "-source:contentPath=$env:GITHUB_WORKSPACE\\deploy\\api" "-dest:iisApp=`"$apiPath`",computerName=`"$env:WEBDEPLOY_SERVER`",userName=`"$env:WEBDEPLOY_USERNAME`",password=`"$env:WEBDEPLOY_PASSWORD`",authtype=`"Basic`"" -allowUntrusted
