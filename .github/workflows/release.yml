@@ -185,7 +185,11 @@ jobs:
             throw 'PCA_WEBDEPLOY_SITE is required.'
           }
   
-          & $msdeploy -verb:sync "-source:contentPath=$env:GITHUB_WORKSPACE\\deploy\\angular" "-dest:iisApp=`"$env:WEBDEPLOY_SITE`",computerName=`"$env:WEBDEPLOY_SERVER`",userName=`"$env:WEBDEPLOY_USERNAME`",password=`"$env:WEBDEPLOY_PASSWORD`",authtype=`"Basic`"" -allowUntrusted
+          $source = "-source:contentPath=$([System.IO.Path]::Combine($env:GITHUB_WORKSPACE, 'deploy', 'angular'))"
+          $dest = "-dest:iisApp=`"$env:WEBDEPLOY_SITE`",computerName=`"$env:WEBDEPLOY_SERVER`",userName=`"$env:WEBDEPLOY_USERNAME`",password=`"$env:WEBDEPLOY_PASSWORD`",authtype=Basic"
+          $arguments = @('-verb:sync', $source, $dest, '-allowUntrusted')
+
+          & $msdeploy @arguments
           
       - name: Deploy API to IIS api application
         shell: pwsh
@@ -210,4 +214,8 @@ jobs:
   
           $apiPath = "$env:WEBDEPLOY_SITE/api"
   
-          & $msdeploy -verb:sync "-source:contentPath=$env:GITHUB_WORKSPACE\\deploy\\api" "-dest:iisApp=`"$apiPath`",computerName=`"$env:WEBDEPLOY_SERVER`",userName=`"$env:WEBDEPLOY_USERNAME`",password=`"$env:WEBDEPLOY_PASSWORD`",authtype=`"Basic`"" -allowUntrusted
+          $source = "-source:contentPath=$([System.IO.Path]::Combine($env:GITHUB_WORKSPACE, 'deploy', 'api'))"
+          $dest = "-dest:iisApp=`"$apiPath`",computerName=`"$env:WEBDEPLOY_SERVER`",userName=`"$env:WEBDEPLOY_USERNAME`",password=`"$env:WEBDEPLOY_PASSWORD`",authtype=Basic"
+          $arguments = @('-verb:sync', $source, $dest, '-allowUntrusted')
+
+          & $msdeploy @arguments
