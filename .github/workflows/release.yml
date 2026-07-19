@@ -11,7 +11,7 @@ on:
         required: false
         type: string
       deploy:
-        description: Deploy build outputs to FTPS
+        description: Deploy build outputs to IIS via Web Deploy
         required: false
         default: false
         type: boolean
@@ -134,9 +134,9 @@ jobs:
             out/angular-dist-${{ steps.tag.outputs.value }}.zip
             out/api-publish-${{ steps.tag.outputs.value }}.zip
 
-  deploy-ftps:
-    name: Deploy to FTPS
-    runs-on: ubuntu-latest
+  deploy-webdeploy:
+    name: Deploy to IIS via Web Deploy
+    runs-on: windows-latest
     environment: production
     needs:
       - build-angular
@@ -156,26 +156,66 @@ jobs:
           name: ${{ env.API_ARTIFACT_BASE }}-${{ github.run_id }}
           path: deploy/api
 
-      - name: Deploy Angular to FTPS /public_html
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.PCA_FTP_SERVER }}
-          username: ${{ secrets.PCA_FTP_USERNAME }}
-          password: ${{ secrets.PCA_FTP_PASSWORD }}
-          protocol: ftps
-          port: ${{ secrets.FTP_PORT || 21 }}
-          security: loose
-          local-dir: deploy/angular/
-          server-dir: /
+      - name: Install Web Deploy
+        shell: pwsh
+        run: |
+          $msdeploy = Join-Path $env:ProgramFiles 'IIS\Microsoft Web Deploy V3\msdeploy.exe'
+          if (-not (Test-Path $msdeploy)) {
+            choco install webdeploy -y --no-progress
+          }
 
-      - name: Deploy API to FTPS /api
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.PCA_FTP_SERVER }}
-          username: ${{ secrets.PCA_FTP_USERNAME }}
-          password: ${{ secrets.PCA_FTP_PASSWORD }}
-          protocol: ftps
-          port: ${{ secrets.FTP_PORT || 21 }}
-          security: loose
-          local-dir: deploy/api/
-          server-dir: /api/
+      - name: Deploy Angular to IIS site root
+        shell: pwsh
+        env:
+          WEBDEPLOY_SERVER: ${{ secrets.PCA_WEBDEPLOY_SERVER }}
+          WEBDEPLOY_USERNAME: ${{ secrets.PCA_WEBDEPLOY_USERNAME }}
+          WEBDEPLOY_PASSWORD: ${{ secrets.PCA_WEBDEPLOY_PASSWORD }}
+          WEBDEPLOY_SITE: ${{ secrets.PCA_WEBDEPLOY_SITE_ANGULAR }}
+        run: |
+          $msdeploy = Join-Path $env:ProgramFiles 'IIS\Microsoft Web Deploy V3\msdeploy.exe'
+          if (-not (Test-Path $msdeploy)) {
+            throw 'Web Deploy was not found after installation.'
+          }
+
+          if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SERVER)) {
+            throw 'PCA_WEBDEPLOY_SERVER is required.'
+          }
+
+          if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SITE)) {
+            throw 'PCA_WEBDEPLOY_SITE is required.'
+          }
+
+          & $msdeploy `
+            -verb:sync `
+            -source:contentPath="${{ github.workspace }}\deploy\angular" `
+            -dest:iisApp="$env:WEBDEPLOY_SITE",computerName="$env:WEBDEPLOY_SERVER",userName="$env:WEBDEPLOY_USERNAME",password="$env:WEBDEPLOY_PASSWORD",authtype="Basic" `
+            -allowUntrusted
+
+      - name: Deploy API to IIS api application
+        shell: pwsh
+        env:
+          WEBDEPLOY_SERVER: ${{ secrets.PCA_WEBDEPLOY_SERVER }}
+          WEBDEPLOY_USERNAME: ${{ secrets.PCA_WEBDEPLOY_USERNAME }}
+          WEBDEPLOY_PASSWORD: ${{ secrets.PCA_WEBDEPLOY_PASSWORD }}
+          WEBDEPLOY_SITE: ${{ secrets.PCA_WEBDEPLOY_SITE_ANGULAR}}
+        run: |
+          $msdeploy = Join-Path $env:ProgramFiles 'IIS\Microsoft Web Deploy V3\msdeploy.exe'
+          if (-not (Test-Path $msdeploy)) {
+            throw 'Web Deploy was not found after installation.'
+          }
+
+          if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SERVER)) {
+            throw 'PCA_WEBDEPLOY_SERVER is required.'
+          }
+
+          if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SITE)) {
+            throw 'PCA_WEBDEPLOY_SITE is required.'
+          }
+
+          $apiPath = "$env:WEBDEPLOY_SITE/api"
+
+          & $msdeploy `
+            -verb:sync `
+            -source:contentPath="${{ github.workspace }}\deploy\api" `
+            -dest:iisApp="$apiPath",computerName="$env:WEBDEPLOY_SERVER",userName="$env:WEBDEPLOY_USERNAME",password="$env:WEBDEPLOY_PASSWORD",authtype="Basic" `
+            -allowUntrusted
