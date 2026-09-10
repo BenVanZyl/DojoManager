@@ -44,7 +44,7 @@
     "@angular/compiler-cli": "^22.0.5",
     "jsdom": "^29.1.1",
     "typescript": "~6.0.0",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "overrides": {
     "@babel/core": "7.29.7",
