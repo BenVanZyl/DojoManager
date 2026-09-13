@@ -36,10 +36,10 @@ jobs:
         working-directory: DojoManager.Angular
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -55,7 +55,7 @@ jobs:
         run: cp public/web.config dist/DojoManager/browser/web.config
 
       - name: Upload Angular artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ env.ANGULAR_ARTIFACT_BASE }}-${{ github.run_id }}
           path: DojoManager.Angular/dist/DojoManager/browser/**
@@ -66,10 +66,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
 
@@ -80,7 +80,7 @@ jobs:
         run: dotnet publish DojoManager.Api/DojoManager.Api.csproj --configuration Release --no-restore --output DojoManager.Api/publish
 
       - name: Upload API artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ env.API_ARTIFACT_BASE }}-${{ github.run_id }}
           path: DojoManager.Api/publish/**
@@ -107,13 +107,13 @@ jobs:
           fi
 
       - name: Download Angular artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ env.ANGULAR_ARTIFACT_BASE }}-${{ github.run_id }}
           path: release/angular
 
       - name: Download API artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ env.API_ARTIFACT_BASE }}-${{ github.run_id }}
           path: release/api
@@ -145,13 +145,13 @@ jobs:
     if: ${{ startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.deploy == true && inputs.release_tag != '') }}
     steps:
       - name: Download Angular artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ env.ANGULAR_ARTIFACT_BASE }}-${{ github.run_id }}
           path: deploy/angular
 
       - name: Download API artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: ${{ env.API_ARTIFACT_BASE }}-${{ github.run_id }}
           path: deploy/api
