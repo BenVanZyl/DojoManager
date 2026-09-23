@@ -189,10 +189,30 @@ jobs:
           $dest = "-dest:iisApp=$env:WEBDEPLOY_SITE,computerName=$env:WEBDEPLOY_SERVER,userName=$env:WEBDEPLOY_USERNAME,password=$env:WEBDEPLOY_PASSWORD,authtype=Basic"
           $arguments = @('-verb:sync', "-source:contentPath=$source", $dest, '-allowUntrusted')
 
-          Write-Host "Running msdeploy command:"
-          Write-Host "& '$msdeploy' @($($arguments | ForEach-Object { '"' + $_ + '"' } -join ', '))"
+          $arguments = @(
+            '-verb:sync'
+            "-source:contentPath=$source"
+            $dest
+            '-allowUntrusted'
+          )
 
-          Start-Process -FilePath $msdeploy -ArgumentList $arguments -NoNewWindow -Wait -PassThru | Out-Null
+          $formattedArguments = (($arguments | ForEach-Object {
+            '"' + $_ + '"'
+          }) -join ', ')
+
+          Write-Host "Running msdeploy command:"
+          Write-Host "& '$msdeploy' $formattedArguments"
+
+          $process = Start-Process `
+            -FilePath $msdeploy `
+            -ArgumentList $arguments `
+            -NoNewWindow `
+            -Wait `
+            -PassThru
+
+          if ($process.ExitCode -ne 0) {
+            throw "msdeploy failed with exit code $($process.ExitCode)."
+          }
           
       - name: Deploy API to IIS api application
         shell: pwsh
@@ -221,7 +241,28 @@ jobs:
           $dest = "-dest:iisApp=$apiPath,computerName=$env:WEBDEPLOY_SERVER,userName=$env:WEBDEPLOY_USERNAME,password=$env:WEBDEPLOY_PASSWORD,authtype=Basic"
           $arguments = @('-verb:sync', "-source:contentPath=$source", $dest, '-allowUntrusted')
 
-          Write-Host "Running msdeploy command:"
-          Write-Host "& '$msdeploy' @($($arguments | ForEach-Object { '"' + $_ + '"' } -join ', '))"
+          $arguments = @(
+            '-verb:sync'
+            "-source:contentPath=$source"
+            $dest
+            '-allowUntrusted'
+          )
 
-          Start-Process -FilePath $msdeploy -ArgumentList $arguments -NoNewWindow -Wait -PassThru | Out-Null
+          $formattedArguments = (($arguments | ForEach-Object {
+            '"' + $_ + '"'
+          }) -join ', ')
+
+          Write-Host "Running msdeploy command:"
+          Write-Host "& '$msdeploy' $formattedArguments"
+
+          $process = Start-Process `
+            -FilePath $msdeploy `
+            -ArgumentList $arguments `
+            -NoNewWindow `
+            -Wait `
+            -PassThru
+
+          if ($process.ExitCode -ne 0) {
+            throw "msdeploy failed with exit code $($process.ExitCode)."
+          }
+
