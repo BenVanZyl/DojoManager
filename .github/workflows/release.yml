@@ -176,93 +176,63 @@ jobs:
           if (-not (Test-Path $msdeploy)) {
             throw 'Web Deploy was not found after installation.'
           }
-  
+
           if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SERVER)) {
             throw 'PCA_WEBDEPLOY_SERVER is required.'
           }
-  
+
           if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SITE)) {
             throw 'PCA_WEBDEPLOY_SITE is required.'
           }
-  
+
           $source = "$([System.IO.Path]::Combine($env:GITHUB_WORKSPACE, 'deploy', 'angular'))"
           $dest = "-dest:iisApp=$env:WEBDEPLOY_SITE,computerName=$env:WEBDEPLOY_SERVER,userName=$env:WEBDEPLOY_USERNAME,password=$env:WEBDEPLOY_PASSWORD,authtype=Basic"
-          $arguments = @('-verb:sync', "-source:contentPath=$source", $dest, '-allowUntrusted')
 
-          $arguments = @(
-            '-verb:sync'
-            "-source:contentPath=$source"
-            $dest
-            '-allowUntrusted'
-          )
+          & $msdeploy `
+            '-verb:sync' `
+            "-source:contentPath=$source" `
+            $dest `
+            '-allowUntrusted' `
+            '-verbose'
 
-          $formattedArguments = (($arguments | ForEach-Object {
-            '"' + $_ + '"'
-          }) -join ', ')
-
-          Write-Host "Running msdeploy command:"
-          Write-Host "& '$msdeploy' $formattedArguments"
-
-          $process = Start-Process `
-            -FilePath $msdeploy `
-            -ArgumentList $arguments `
-            -NoNewWindow `
-            -Wait `
-            -PassThru
-
-          if ($process.ExitCode -ne 0) {
-            throw "msdeploy failed with exit code $($process.ExitCode)."
+          if ($LASTEXITCODE -ne 0) {
+            throw "msdeploy failed with exit code $LASTEXITCODE."
           }
-          
+
       - name: Deploy API to IIS api application
         shell: pwsh
         env:
           WEBDEPLOY_SERVER: ${{ secrets.PCA_WEBDEPLOY_SERVER }}
           WEBDEPLOY_USERNAME: ${{ secrets.PCA_WEBDEPLOY_USERNAME }}
           WEBDEPLOY_PASSWORD: ${{ secrets.PCA_WEBDEPLOY_PASSWORD }}
-          WEBDEPLOY_SITE: ${{ secrets.PCA_WEBDEPLOY_SITE_ANGULAR}}
+          WEBDEPLOY_SITE: ${{ secrets.PCA_WEBDEPLOY_SITE_ANGULAR }}
+          WEBDEPLOY_API_PATH: ${{ secrets.PCA_WEBDEPLOY_SITE_API }}
         run: |
           $msdeploy = Join-Path $env:ProgramFiles 'IIS\Microsoft Web Deploy V3\msdeploy.exe'
           if (-not (Test-Path $msdeploy)) {
             throw 'Web Deploy was not found after installation.'
           }
-  
+
           if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SERVER)) {
             throw 'PCA_WEBDEPLOY_SERVER is required.'
           }
-  
-          if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SITE)) {
-            throw 'PCA_WEBDEPLOY_SITE is required.'
-          }
-  
-          $apiPath = "$env:WEBDEPLOY_SITE/api"
 
+          if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_API_PATH)) {
+            throw 'PCA_WEBDEPLOY_SITE_API is required.'
+          }
+
+          $apiPath = $env:WEBDEPLOY_API_PATH
           $source = "$([System.IO.Path]::Combine($env:GITHUB_WORKSPACE, 'deploy', 'api'))"
           $dest = "-dest:iisApp=$apiPath,computerName=$env:WEBDEPLOY_SERVER,userName=$env:WEBDEPLOY_USERNAME,password=$env:WEBDEPLOY_PASSWORD,authtype=Basic"
-          $arguments = @('-verb:sync', "-source:contentPath=$source", $dest, '-allowUntrusted')
 
-          $arguments = @(
-            '-verb:sync'
-            "-source:contentPath=$source"
-            $dest
-            '-allowUntrusted'
-          )
+          & $msdeploy `
+            '-verb:sync' `
+            "-source:contentPath=$source" `
+            $dest `
+            '-allowUntrusted' `
+            '-verbose'
 
-          $formattedArguments = (($arguments | ForEach-Object {
-            '"' + $_ + '"'
-          }) -join ', ')
-
-          Write-Host "Running msdeploy command:"
-          Write-Host "& '$msdeploy' $formattedArguments"
-
-          $process = Start-Process `
-            -FilePath $msdeploy `
-            -ArgumentList $arguments `
-            -NoNewWindow `
-            -Wait `
-            -PassThru
-
-          if ($process.ExitCode -ne 0) {
-            throw "msdeploy failed with exit code $($process.ExitCode)."
+          if ($LASTEXITCODE -ne 0) {
+            throw "msdeploy failed with exit code $LASTEXITCODE."
           }
 
