@@ -7,11 +7,11 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Existing tag to publish/deploy (required for manual release)
+        description: Existing tag to build and publish (optional for manual deployment)
         required: false
         type: string
       deploy:
-        description: Deploy build outputs to IIS via Web Deploy
+        description: Deploy build outputs via FTPS
         required: false
         default: false
         type: boolean
@@ -37,6 +37,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag != '' && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
 
       - name: Setup Node
         uses: actions/setup-node@v5
@@ -67,6 +69,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag != '' && format('refs/tags/{0}', inputs.release_tag) || github.ref }}
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
@@ -93,18 +97,13 @@ jobs:
       - build-angular
       - build-api
     if: ${{ startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.release_tag != '') }}
-    outputs:
-      release_tag: ${{ steps.tag.outputs.value }}
     steps:
       - name: Resolve release tag
         id: tag
         shell: bash
-        run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            echo "value=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-          else
-            echo "value=${{ inputs.release_tag }}" >> "$GITHUB_OUTPUT"
-          fi
+        env:
+          RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.release_tag != '' && inputs.release_tag || github.ref_name }}
+        run: echo "value=$RELEASE_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Download Angular artifact
         uses: actions/download-artifact@v5
@@ -120,10 +119,14 @@ jobs:
 
       - name: Create release archives
         shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.tag.outputs.value }}
         run: |
           mkdir -p out
-          tar -a -c -f out/angular-dist-${{ steps.tag.outputs.value }}.zip -C release angular
-          tar -a -c -f out/api-publish-${{ steps.tag.outputs.value }}.zip -C release api
+          archive_tag="${RELEASE_TAG//\//-}"
+          cd release
+          zip -qr "../out/angular-dist-${archive_tag}.zip" angular
+          zip -qr "../out/api-publish-${archive_tag}.zip" api
 
       - name: Publish GitHub release assets
         uses: softprops/action-gh-release@v2
@@ -131,18 +134,23 @@ jobs:
           tag_name: ${{ steps.tag.outputs.value }}
           generate_release_notes: true
           files: |
-            out/angular-dist-${{ steps.tag.outputs.value }}.zip
-            out/api-publish-${{ steps.tag.outputs.value }}.zip
+            out/*.zip
 
-  deploy-webdeploy:
-    name: Deploy to IIS via Web Deploy
-    runs-on: windows-latest
+  deploy-ftps:
+    name: Deploy via FTPS
+    runs-on: ubuntu-latest
     environment: production
+    concurrency:
+      group: production-ftps-deploy
+      cancel-in-progress: false
     needs:
       - build-angular
       - build-api
       - publish-release
-    if: ${{ startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && inputs.deploy == true && inputs.release_tag != '') }}
+    if: >-
+      ${{ !cancelled() && needs.build-angular.result == 'success' && needs.build-api.result == 'success'
+          && (needs.publish-release.result == 'success' || needs.publish-release.result == 'skipped')
+          && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.deploy)) }}
     steps:
       - name: Download Angular artifact
         uses: actions/download-artifact@v5
@@ -156,113 +164,28 @@ jobs:
           name: ${{ env.API_ARTIFACT_BASE }}-${{ github.run_id }}
           path: deploy/api
 
-      - name: Install Web Deploy
-        shell: pwsh
-        run: |
-          $msdeploy = Join-Path $env:ProgramFiles 'IIS\Microsoft Web Deploy V3\msdeploy.exe'
-          if (-not (Test-Path $msdeploy)) {
-            choco install webdeploy -y --no-progress
-          }
+      - name: Deploy Angular
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT || 21 }}
+          protocol: ftps
+          security: strict
+          local-dir: deploy/angular/
+          server-dir: /jkajoondalup.com/
+          exclude: |
+            api/**
 
-      - name: Deploy Angular to IIS site root
-        shell: pwsh
-        env:
-          WEBDEPLOY_SERVER: ${{ secrets.PCA_WEBDEPLOY_SERVER }}
-          WEBDEPLOY_USERNAME: ${{ secrets.PCA_WEBDEPLOY_USERNAME }}
-          WEBDEPLOY_PASSWORD: ${{ secrets.PCA_WEBDEPLOY_PASSWORD }}
-          WEBDEPLOY_SITE: ${{ secrets.PCA_WEBDEPLOY_SITE_ANGULAR }}
-        run: |
-          $msdeploy = Join-Path $env:ProgramFiles 'IIS\Microsoft Web Deploy V3\msdeploy.exe'
-          if (-not (Test-Path $msdeploy)) {
-            throw 'Web Deploy was not found after installation.'
-          }
-  
-          if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SERVER)) {
-            throw 'PCA_WEBDEPLOY_SERVER is required.'
-          }
-  
-          if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SITE)) {
-            throw 'PCA_WEBDEPLOY_SITE is required.'
-          }
-  
-          $source = "$([System.IO.Path]::Combine($env:GITHUB_WORKSPACE, 'deploy', 'angular'))"
-          $dest = "-dest:iisApp=$env:WEBDEPLOY_SITE,computerName=$env:WEBDEPLOY_SERVER,userName=$env:WEBDEPLOY_USERNAME,password=$env:WEBDEPLOY_PASSWORD,authtype=Basic"
-          $arguments = @('-verb:sync', "-source:contentPath=$source", $dest, '-allowUntrusted')
-
-          $arguments = @(
-            '-verb:sync'
-            "-source:contentPath=$source"
-            $dest
-            '-allowUntrusted'
-          )
-
-          $formattedArguments = (($arguments | ForEach-Object {
-            '"' + $_ + '"'
-          }) -join ', ')
-
-          Write-Host "Running msdeploy command:"
-          Write-Host "& '$msdeploy' $formattedArguments"
-
-          $process = Start-Process `
-            -FilePath $msdeploy `
-            -ArgumentList $arguments `
-            -NoNewWindow `
-            -Wait `
-            -PassThru
-
-          if ($process.ExitCode -ne 0) {
-            throw "msdeploy failed with exit code $($process.ExitCode)."
-          }
-          
-      - name: Deploy API to IIS api application
-        shell: pwsh
-        env:
-          WEBDEPLOY_SERVER: ${{ secrets.PCA_WEBDEPLOY_SERVER }}
-          WEBDEPLOY_USERNAME: ${{ secrets.PCA_WEBDEPLOY_USERNAME }}
-          WEBDEPLOY_PASSWORD: ${{ secrets.PCA_WEBDEPLOY_PASSWORD }}
-          WEBDEPLOY_SITE: ${{ secrets.PCA_WEBDEPLOY_SITE_ANGULAR}}
-        run: |
-          $msdeploy = Join-Path $env:ProgramFiles 'IIS\Microsoft Web Deploy V3\msdeploy.exe'
-          if (-not (Test-Path $msdeploy)) {
-            throw 'Web Deploy was not found after installation.'
-          }
-  
-          if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SERVER)) {
-            throw 'PCA_WEBDEPLOY_SERVER is required.'
-          }
-  
-          if ([string]::IsNullOrWhiteSpace($env:WEBDEPLOY_SITE)) {
-            throw 'PCA_WEBDEPLOY_SITE is required.'
-          }
-  
-          $apiPath = "$env:WEBDEPLOY_SITE/api"
-
-          $source = "$([System.IO.Path]::Combine($env:GITHUB_WORKSPACE, 'deploy', 'api'))"
-          $dest = "-dest:iisApp=$apiPath,computerName=$env:WEBDEPLOY_SERVER,userName=$env:WEBDEPLOY_USERNAME,password=$env:WEBDEPLOY_PASSWORD,authtype=Basic"
-          $arguments = @('-verb:sync', "-source:contentPath=$source", $dest, '-allowUntrusted')
-
-          $arguments = @(
-            '-verb:sync'
-            "-source:contentPath=$source"
-            $dest
-            '-allowUntrusted'
-          )
-
-          $formattedArguments = (($arguments | ForEach-Object {
-            '"' + $_ + '"'
-          }) -join ', ')
-
-          Write-Host "Running msdeploy command:"
-          Write-Host "& '$msdeploy' $formattedArguments"
-
-          $process = Start-Process `
-            -FilePath $msdeploy `
-            -ArgumentList $arguments `
-            -NoNewWindow `
-            -Wait `
-            -PassThru
-
-          if ($process.ExitCode -ne 0) {
-            throw "msdeploy failed with exit code $($process.ExitCode)."
-          }
-
+      - name: Deploy API
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.6
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          port: ${{ secrets.FTP_PORT || 21 }}
+          protocol: ftps
+          security: strict
+          local-dir: deploy/api/
+          server-dir: /jkajoondalup.com/api/

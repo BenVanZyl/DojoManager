@@ -89,16 +89,24 @@ Triggers:
 - Manual run (`workflow_dispatch`)
 
 Behavior:
-- Builds Angular and API outputs
+- Builds Angular and API outputs from the pushed tag, selected manual ref, or supplied manual release tag
 - Publishes both as workflow artifacts
-- Publishes zipped assets to GitHub Releases for tag-based releases
-- Deploys to FTPS:
-  - Angular output to `/public_html`
-  - API output to `/api`
+- Publishes zipped assets to GitHub Releases when building a tag
+- Deploys on tag pushes and on manual runs with `deploy` enabled:
+  - Angular output to `/jkajoondalup.com/`
+  - API output to `/jkajoondalup.com/api/`
 
 Manual release inputs:
-- `release_tag` (required when manually publishing/deploying)
-- `deploy` (`true` to run FTPS deployment on manual runs)
+- `release_tag` (optional existing tag to build and publish; otherwise the selected ref is built)
+- `deploy` (`true` to run FTPS deployment on manual runs; defaults to `false`)
+
+Deployment uses explicit FTPS with certificate validation. The paths are absolute
+within the FTP account's server root. The action tracks deployed files separately
+for Angular and the API; files previously deployed by the action may be removed
+when no longer in the build. IIS must already be configured to run the API as an
+ASP.NET Core application under `/api`; uploading files does not configure IIS.
+Files included in the published API, including `appsettings.json`, are overwritten
+on deployment; keep production-specific settings outside the deployed files.
 
 ### Required repository secrets
 
